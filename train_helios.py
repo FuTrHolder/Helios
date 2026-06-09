@@ -1496,6 +1496,7 @@ def main(args):
                                 noise=torch.randn(
                                     noisy_model_input_shape, device=accelerator.device, dtype=weight_dtype
                                 ),
+                                weight_dtype=weight_dtype,
                                 # For Stage 1
                                 is_keep_x0=True,
                                 history_sizes=args.training_config.history_sizes,
