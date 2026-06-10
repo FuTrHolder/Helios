@@ -3116,6 +3116,19 @@ def _critic_loss(
             gan_prompt_embeds = prompt_embeds
 
         if is_gan_low_vram_mode:
+            # Under accelerate's DeepSpeed wrapper, every accelerator.backward()
+            # triggers engine.step() (i.e. optimizer.step + zero_grad). Calling
+            # backward twice in this block would step the critic optimizer twice,
+            # so denoising_loss and gan/r1/r2 losses would never reach the
+            # optimizer in the same step. Drive the engine directly to defer the
+            # step until both backwards have populated their gradients. Falls
+            # back to accelerator.backward() when DeepSpeed isn't in use.
+            critic_engine = getattr(
+                getattr(critic_accelerator, "deepspeed_engine_wrapped", None),
+                "engine",
+                None,
+            )
+
             if is_separate_gan_grad:
                 for name, param in fake_score_model.named_parameters():
                     if name in gan_extra_critic_trainable_params:
@@ -3142,7 +3155,11 @@ def _critic_loss(
                 f"Denoising loss should have gradient! Got {denoising_loss.requires_grad}"
             )
             assert denoising_loss.grad_fn is not None, "Denoising loss should have grad_fn!"
-            critic_accelerator.backward(denoising_loss)
+            if critic_engine is not None:
+                critic_engine.set_gradient_accumulation_boundary(is_boundary=False)
+                critic_engine.backward(denoising_loss)
+            else:
+                critic_accelerator.backward(denoising_loss)
 
             if is_separate_gan_grad:
                 for name, param in fake_score_model.named_parameters():
@@ -3279,9 +3296,16 @@ def _critic_loss(
             if total_regular_loss is not None:
                 assert total_regular_loss.requires_grad
                 assert total_regular_loss.grad_fn is not None
-                critic_accelerator.backward(total_regular_loss + gan_D_real_loss + gan_D_fake_loss)
+                second_loss = total_regular_loss + gan_D_real_loss + gan_D_fake_loss
             else:
-                critic_accelerator.backward(gan_D_real_loss + gan_D_fake_loss)
+                second_loss = gan_D_real_loss + gan_D_fake_loss
+
+            if critic_engine is not None:
+                critic_engine.set_gradient_accumulation_boundary(is_boundary=True)
+                critic_engine.backward(second_loss)
+                critic_engine.step()
+            else:
+                critic_accelerator.backward(second_loss)
 
         else:
             raise NotImplementedError
