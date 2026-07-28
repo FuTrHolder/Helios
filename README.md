@@ -51,6 +51,7 @@ or you can click <a href="https://github.com/PKU-YuanGroup/Helios-Page/blob/main
 
 ## 📣 Latest News!!
 
+* `[2026.07.28]` 👋 [CNAPS.AI](https://cnaps.ai/) has provided a flexible workflow of Helios on their online inference service platform. You can check their [blog 1](https://docs.cnaps.ai/helios-base) and [blog 2](https://docs.cnaps.ai/helios-distilled) for an easy tutorial and more adaptable parameters to better use Helios there.
 * `[2026.03.26]` 🔥 Add summary of FAQ, Tips, and Tutorals: https://github.com/PKU-YuanGroup/Helios/issues/47.
 * `[2026.03.24]` 👋 A community-made, unofficial YouTube tutorial for Helios is available [here](https://www.youtube.com/watch?v=AvFniggt6qg). It covers installation on a **consumer-grade PC** and supports **4K video generation**.
 * `[2026.03.20]` 🚀 Helios now supports [Ahead-of-Time Compilation (AOTI)](https://huggingface.co/blog/zerogpu-aoti) on Spaces, with special thanks to the HuggingFace Team! Please refer to [this Space](https://huggingface.co/spaces/BestWishYsh/Helios-14B-RealTime-AOTI) for a usage example.
@@ -77,6 +78,7 @@ If your work has improved **Helios** and you would like more people to see it, p
 * [SGLang-Diffusion](https://github.com/sgl-project/sglang/pull/19782): An inference framework for accelerated image and video generation using diffusion models. It provides an end-to-end unified pipeline with optimized kernels and an efficient scheduler loop.
 * [vLLM-Omni](https://github.com/vllm-project/vllm-omni/pull/1604): A fully disaggregated serving system for any-to-any models. vLLM-Omni breaks complex architectures into a stage-based graph, using a decoupled backend to maximize resource efficiency and throughput.
 * [Cache-DiT](https://github.com/vipshop/cache-dit/pull/834): A PyTorch-native and Flexible Inference Engine with Hybrid Cache Acceleration and Parallelism for DiTs. It built on top of the Diffusers library and now supports nearly ALL DiTs from Diffusers.
+* [CNAPS.AI](https://docs.cnaps.ai/helios-base): An AI creation platform for generating and editing visual content through text, images, and videos, with an accessible interface for creative production workflows.
 
 ## ⚙️ Requirements and Installation
 
@@ -532,6 +534,12 @@ For example, let's take Helios-Base. **(Diffusers Backend)**
     --backend diffusers
   ```
 </details>
+
+### ✨ CNAPS.AI Online Workflow
+
+[CNAPS.AI](https://cnaps.ai/) has provided a flexible workflow of Helios on their online inference service platform. You can check their [blog 1](https://docs.cnaps.ai/helios-base) and [blog 2](https://docs.cnaps.ai/helios-distilled) for an easy tutorial and more adaptable parameters to better use Helios there.
+
+[![CNAPS.AI](https://github.com/user-attachments/assets/d04d94d0-1e64-4200-b76e-96cc597ae37f)](https://docs.cnaps.ai/helios-base)
 
 ## 🗝️ Training
 
