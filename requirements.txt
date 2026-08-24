@@ -5,7 +5,7 @@ triton==3.6.0
 kernels==0.13.0
 # diffusers==0.36.0
 # transformers==4.57.6
-git+https://github.com/huggingface/diffusers.git
+diffusers==0.38.0
 transformers==5.3.0
 sentence-transformers==5.2.3
 accelerate==1.12.0
