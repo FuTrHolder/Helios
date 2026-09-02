@@ -1,0 +1,207 @@
+name: Helios GPU Video Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      prompt:
+        description: "Helios video prompt"
+        required: true
+        default: "A cinematic documentary shot of a modern technology workspace with multiple monitors, a developer working at a desk, subtle camera movement, realistic lighting, photorealistic."
+
+      frames:
+        description: "Number of frames"
+        required: true
+        default: "33"
+
+      steps:
+        description: "Inference steps per pyramid stage"
+        required: true
+        default: "2"
+
+      seed:
+        description: "Random seed"
+        required: true
+        default: "42"
+
+jobs:
+
+  generate-video:
+
+    name: Generate Helios Test Video
+
+    # IMPORTANT:
+    # This must be replaced with the label of your NVIDIA GPU
+    # self-hosted runner.
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - gpu
+
+    timeout-minutes: 60
+
+    steps:
+
+      # ---------------------------------------------------------
+      # 1. Checkout
+      # ---------------------------------------------------------
+
+      - name: Checkout customize branch
+        uses: actions/checkout@v4
+        with:
+          ref: customize
+
+      # ---------------------------------------------------------
+      # 2. Check Python
+      # ---------------------------------------------------------
+
+      - name: Check Python
+        run: |
+          python3 --version
+          python3 -m pip --version
+
+      # ---------------------------------------------------------
+      # 3. Check NVIDIA GPU
+      # ---------------------------------------------------------
+
+      - name: Check NVIDIA GPU
+        run: |
+          nvidia-smi
+
+      # ---------------------------------------------------------
+      # 4. Create virtual environment
+      # ---------------------------------------------------------
+
+      - name: Create virtual environment
+        run: |
+          python3 -m venv .venv
+
+      - name: Upgrade pip
+        run: |
+          .venv/bin/python -m pip install --upgrade pip
+
+      # ---------------------------------------------------------
+      # 5. Install dependencies
+      # ---------------------------------------------------------
+
+      - name: Install requirements
+        run: |
+          .venv/bin/pip install -r requirements.txt
+
+      # ---------------------------------------------------------
+      # 6. Verify PyTorch CUDA
+      # ---------------------------------------------------------
+
+      - name: Verify PyTorch CUDA
+        run: |
+          .venv/bin/python - <<'PY'
+          import torch
+
+          print("PyTorch version:", torch.__version__)
+          print("CUDA available:", torch.cuda.is_available())
+          print("CUDA version:", torch.version.cuda)
+
+          if not torch.cuda.is_available():
+              raise RuntimeError(
+                  "CUDA GPU is not available."
+              )
+
+          print(
+              "GPU:",
+              torch.cuda.get_device_name(0)
+          )
+
+          print(
+              "GPU capability:",
+              torch.cuda.get_device_capability(0)
+          )
+          PY
+
+      # ---------------------------------------------------------
+      # 7. Generate test video
+      # ---------------------------------------------------------
+
+      - name: Generate Helios video
+        env:
+          HELIOS_PROMPT: ${{ inputs.prompt }}
+          HELIOS_FRAMES: ${{ inputs.frames }}
+          HELIOS_STEPS: ${{ inputs.steps }}
+          HELIOS_SEED: ${{ inputs.seed }}
+
+        run: |
+          .venv/bin/python - <<'PY'
+
+          import os
+          from youtube.helios_generator import HeliosGenerator
+
+          prompt = os.environ["HELIOS_PROMPT"]
+
+          frames = int(
+              os.environ["HELIOS_FRAMES"]
+          )
+
+          steps = int(
+              os.environ["HELIOS_STEPS"]
+          )
+
+          seed = int(
+              os.environ["HELIOS_SEED"]
+          )
+
+          print("=" * 70)
+          print("HELIOS GPU TEST")
+          print("=" * 70)
+
+          print("Prompt:")
+          print(prompt)
+
+          print("Frames:", frames)
+          print("Steps:", steps)
+          print("Seed:", seed)
+
+          generator = HeliosGenerator()
+
+          output = generator.generate(
+              prompt=prompt,
+              output_path=(
+                  "outputs/"
+                  "helios_gpu_test.mp4"
+              ),
+              height=384,
+              width=640,
+              num_frames=frames,
+              num_inference_steps=steps,
+              seed=seed,
+              is_amplify_first_chunk=True,
+              fps=24,
+          )
+
+          print()
+          print("=" * 70)
+          print("GENERATION SUCCESS")
+          print("=" * 70)
+
+          print("Output:", output)
+
+          PY
+
+      # ---------------------------------------------------------
+      # 8. Check output
+      # ---------------------------------------------------------
+
+      - name: Check generated video
+        run: |
+          ls -lh outputs/
+
+          test -f outputs/helios_gpu_test.mp4
+
+      # ---------------------------------------------------------
+      # 9. Upload generated MP4
+      # ---------------------------------------------------------
+
+      - name: Upload generated video
+        uses: actions/upload-artifact@v4
+        with:
+          name: helios-gpu-test-video
+          path: outputs/helios_gpu_test.mp4
+          retention-days: 7
