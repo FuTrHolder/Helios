@@ -1,0 +1,100 @@
+name: YouTube Pipeline - Code Test
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - customize
+    paths:
+      - "youtube/**"
+      - "api/**"
+      - ".github/workflows/test-youtube-pipeline.yml"
+      - "requirements.txt"
+
+jobs:
+  test:
+    name: Python Code Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Upgrade pip
+        run: |
+          python -m pip install --upgrade pip
+
+      - name: Install test dependencies
+        run: |
+          pip install fastapi "uvicorn[standard]"
+          pip install pytest
+
+      - name: Compile Python files
+        run: |
+          python -m compileall youtube api
+
+      - name: Test article parser
+        run: |
+          python - <<'PY'
+          from youtube.article_parser import parse_article
+          from youtube.storyboard import build_storyboard
+          from youtube.prompt_builder import build_scene_prompt
+
+          article = parse_article(
+              title="AI Video Generation",
+              content="""
+              AI video generation is changing content creation.
+
+              Bloggers can transform written articles into
+              engaging video content.
+              """
+          )
+
+          assert article.title == "AI Video Generation"
+          assert len(article.content) > 0
+
+          storyboard = build_storyboard(
+              article,
+              max_scenes=2,
+          )
+
+          assert len(storyboard.scenes) == 2
+
+          prompt = build_scene_prompt(
+              storyboard.scenes[0]
+          )
+
+          assert len(prompt) > 0
+          assert "cinematic" in prompt.lower()
+
+          print("Article parser test: PASS")
+          print("Storyboard test: PASS")
+          print("Prompt builder test: PASS")
+          PY
+
+      - name: Test pipeline imports
+        run: |
+          python - <<'PY'
+          from youtube.pipeline import BlogToYouTubePipeline
+          from youtube.helios_generator import HeliosGenerator
+          from youtube.video_composer import concatenate_videos
+
+          print("Pipeline imports: PASS")
+          print("Helios generator imports: PASS")
+          print("Video composer imports: PASS")
+          PY
+
+      - name: Test API imports
+        run: |
+          python - <<'PY'
+          from api.server import app
+
+          print("FastAPI application import: PASS")
+          print(f"Routes: {len(app.routes)}")
+          PY
