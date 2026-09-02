@@ -33,3 +33,5 @@ hf-doc-builder
 torchdata
 loguru
 tf_keras
+fastapi
+uvicorn[standard]
