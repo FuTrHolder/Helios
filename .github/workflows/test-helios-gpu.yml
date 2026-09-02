@@ -23,15 +23,19 @@ on:
         required: true
         default: "42"
 
+  push:
+    branches:
+      - customize
+    paths:
+      - ".github/workflows/test-helios-gpu.yml"
+
 jobs:
-
   generate-video:
-
     name: Generate Helios Test Video
 
-    # IMPORTANT:
-    # This must be replaced with the label of your NVIDIA GPU
-    # self-hosted runner.
+    # GPU는 수동 실행할 때만 사용
+    if: github.event_name == 'workflow_dispatch'
+
     runs-on:
       - self-hosted
       - linux
